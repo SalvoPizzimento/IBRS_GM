@@ -2,9 +2,8 @@
 
 #define prng_sec_level 96
 #define default_sec_level 80
-#define SIGNER_IDX 0
 
-void setup_group(char* username, char* filename, char* groupname, int group_number, int check){
+void setup_group(char* username, char* filename, char* groupname, int check){
     
     char* read_buffer;
     char send[50];
@@ -174,6 +173,7 @@ void setup_CS(char* username, char* filename, char* groupname, int check){
 
     ibrs_public_params_t public_params;
     FILE* pairing_stream, *param_stream, *keys_stream, *sign_stream;
+    
     pairing_stream = fopen("pairing.txt", "r");
     param_stream = fopen("param.txt", "r");
     keys_stream = fopen("keys.txt", "r");
@@ -181,30 +181,38 @@ void setup_CS(char* username, char* filename, char* groupname, int check){
 
     load_params(&public_params, default_sec_level, pairing_stream, param_stream);
     
-    int num_id = 10;
+    int signer_idx = 0;
     array_ibrs ids;
     FILE* file_ids = fopen("i.txt", "r");
+
+    char c;
+    int num_lines = 1;
+
+    for (c = getc(file_ids); c != EOF; c = getc(file_ids)){
+        if (c == '\n') 
+            num_lines += 1;
+    }
+    
+    rewind(file_ids);
     
     if(file_ids!=NULL){
-        char* line[num_id];
-        char* clean_line;
+        char* line[num_lines];
         int j = 0;
         size_t len = 0;
-
-        
-        init_array_ibrs(&ids, num_id);
-        for(j = 0; j < num_id; j++) {
-            clean_line = calloc(50, sizeof(char));
+       
+        init_array_ibrs(&ids, num_lines);
+        for(j = 0; j < num_lines; j++) {
             line[j] = NULL;
             len = 0;
             if(getline(&line[j], &len, file_ids) != -1){
-                strncpy(clean_line, line[j], strlen(line[j])-2);
-                insert_id(&ids, clean_line, j);
+                line[j][strcspn(line[j], "\r\n")] = 0;
+                if(strcmp(line[j], username) == 0)
+                    signer_idx = j;
+                insert_id(&ids, line[j], j);
             }
-            free(clean_line);
         }
         fclose(file_ids);
-	}
+    }
     
     // Loading keys
     ibrs_key_pair keys;
@@ -212,9 +220,8 @@ void setup_CS(char* username, char* filename, char* groupname, int check){
     
     // Signing
     ibrs_sig sign;
-    //filename[strcspn(filename, "\r\n")] = 0;
-    ibrs_sign(&public_params, ids, (uint8_t *)filename, 0, &keys, &sign, sign_stream);
-    
+    ibrs_sign(&public_params, ids, (uint8_t *)filename, signer_idx, &keys, &sign, sign_stream);
+       
     // INVIO FIRMA AL CLOUD SERVER
     FILE* list_file;
     char* file_buffer;
@@ -327,7 +334,7 @@ int main(int argc, char *argv[]) {
             }
             groupname[strcspn(groupname, "\r\n")] = 0;
 
-            setup_group(username, filename, groupname, 20, 1);
+            setup_group(username, filename, groupname, 1);
             printf("Gruppo creato e parametri ricevuti\n");
         }
         else if(atoi(cmd) == 2){
@@ -336,8 +343,9 @@ int main(int argc, char *argv[]) {
                 printf("problema nella fgets del groupname\n");
                 exit(EXIT_FAILURE);
             }
+            groupname[strcspn(groupname, "\r\n")] = 0;
         
-            setup_group(username, NULL, groupname, 0, 0);
+            setup_group(username, NULL, groupname, 0);
             printf("Parametri ricevuti\n");
         }
         else{
