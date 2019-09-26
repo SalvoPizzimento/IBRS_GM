@@ -8,4 +8,4 @@ RUN tar xzf pbc-0.5.14.tar.gz
 RUN cd pbc-0.5.14 && ./configure && make && make install
 RUN ldconfig -v
 
-RUN git clone https://github.com/SalvoPizzimento/IBRS_GM
+RUN cd /home && git clone https://github.com/SalvoPizzimento/IBRS_GM
