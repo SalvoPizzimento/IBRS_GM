@@ -27,6 +27,7 @@
 #define SA struct sockaddr
 
 int socket_id;
+char* psw_cs;
 int connect_socket(char serv_addr[], int port);
 
 #endif /* LIB_IBRS_HELPER_H */

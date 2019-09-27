@@ -254,30 +254,80 @@ void setup_CS(char* username, char* filename, char* groupname, int check){
     free(read_buffer);
 
     if(check == 1){
+    	read_buffer = calloc(500, sizeof(char));
         if(write(socket_id, "DOWNLOAD", 8) == -1) {
             printf("problema nella write sulla socket \n");
             exit(EXIT_FAILURE);
         }
+        if(read(socket_id, read_buffer, 500) == -1){
+        	printf("Problema nella read della socket\n");
+        	exit(EXIT_FAILURE);
+        }
+        char* my_psw;
+        my_psw = getenv("PSW");
+        if(write(socket_id, my_psw, strlen(my_psw)) == -1){
+	    	printf("problema nella write sulla socket \n");
+	        exit(EXIT_FAILURE);
+	   	}
+	   	free(read_buffer);
+
+	   	read_buffer = calloc(1024, sizeof(char));
+	    if(read(socket_id, read_buffer, 1024) == -1){
+	        printf("Problema nella read della socket\n");
+	        exit(EXIT_FAILURE);
+	    }
+
+	    if(strncmp(read_buffer, "DOWNLOAD", 8) == 0) {
+	        printf("DOWNLOAD EFFETTUATO!\n");
+	        exit(EXIT_SUCCESS);
+	    }
     }
     else{
         if(write(socket_id, "UPLOAD", 6) == -1) {
             printf("problema nella write sulla socket \n");
             exit(EXIT_FAILURE);
         }
-    }
 
-    read_buffer = calloc(1024, sizeof(char));
-    if(read(socket_id, read_buffer, 1024) == -1){
-        printf("Problema nella read della socket\n");
-        exit(EXIT_FAILURE);
-    }
-    if(strncmp(read_buffer, "DOWNLOAD", 8) == 0) {
-        printf("DOWNLOAD EFFETTUATO!\n");
-        exit(EXIT_SUCCESS);
-    }
-    else if(strncmp(read_buffer, "READY", 5) == 0) {
-        printf("UPLOAD EFFETTUATO!\n");
-        exit(EXIT_SUCCESS);
+        read_buffer = calloc(500, sizeof(char));
+        if(read(socket_id, read_buffer, 500) == -1){
+        	printf("Problema nella read della socket\n");
+        	exit(EXIT_FAILURE);
+        }
+        free(read_buffer);
+
+        read_buffer = calloc(1024, sizeof(char));
+	    if(read(socket_id, read_buffer, 1024) == -1){
+	        printf("Problema nella read della socket\n");
+	        exit(EXIT_FAILURE);
+	    }
+
+	    psw_cs = calloc(500, sizeof(char));
+	    sprintf(psw_cs, "%s", read_buffer);
+	    free(read_buffer);
+
+	    if(write(socket_id, "ACK", 3) == -1){
+	    	printf("problema nella write sulla socket \n");
+            exit(EXIT_FAILURE);
+	    }
+
+	    read_buffer = calloc(1024, sizeof(char));
+	    if(read(socket_id, read_buffer, 1024) == -1){
+	        printf("Problema nella read della socket\n");
+	        exit(EXIT_FAILURE);
+	    }
+
+	    if(strncmp(read_buffer, "READY", 5) == 0) {
+	    	pid_t pid = fork();
+	    	if(pid < 0){
+				printf("errore nella fork");
+			}
+			else if(pid == 0){
+				execl("/usr/bin/sshpass", "sshpass", "-p", psw_cs, "/usr/bin/scp", filename, "root@172.17.0.5:/home", (char*)0);
+			}
+	        printf("UPLOAD EFFETTUATO!\n");
+	    	free(psw_cs);
+	        exit(EXIT_SUCCESS);
+	    }
     }
 
     free(send_buffer);
