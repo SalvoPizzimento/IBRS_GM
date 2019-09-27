@@ -303,7 +303,10 @@ int main(int argc, char *argv[]) {
     }
 
     if(atoi(cmd) == 1){
-        socket_fd = connect_socket("127.0.0.1", 8080);
+        char* ip_ga;
+        ip_ga = getenv("GA");
+
+        socket_fd = connect_socket(ip_ga, 8080);
         socket_id = socket_fd;
 
         printf("\nScrivere \"1\" per creare un gruppo di condivisione, \nScrivere \"2\" per partecipare a un gruppo\n");
@@ -356,7 +359,10 @@ int main(int argc, char *argv[]) {
         close(socket_fd);
     }
     else if(atoi(cmd) == 2){
-        socket_fd = connect_socket("127.0.0.1", 8888);
+        char* ip_cs;
+        ip_cs = getenv("CS");
+
+        socket_fd = connect_socket(ip_cs, 8888);
         socket_id = socket_fd;
         
         printf("\nScrivere \"1\" per effettuare un download, \nScrivere \"2\" per effettuare un upload.\n");
