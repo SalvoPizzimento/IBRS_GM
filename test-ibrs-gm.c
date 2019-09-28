@@ -16,7 +16,7 @@ void setup_group(char* username, char* filename, char* groupname, int check){
 
     // CONFERMA DI AVVENUTA RICEZIONE
     read_buffer = calloc(1024, sizeof(char));
-    rcv_data(socket_id, read_buffer);
+    rcv_data(socket_id, read_buffer, 0);
 
     if(strncmp(read_buffer, "NULL", 4) == 0){
         printf("Username o Groupname invalido..\n");
@@ -54,7 +54,7 @@ void setup_group(char* username, char* filename, char* groupname, int check){
     FILE *file_to_open;
     // RICEZIONE DATI PAIRING
     read_buffer = calloc(1024, sizeof(char));
-    rcv_data(socket_id, read_buffer);
+    rcv_data(socket_id, read_buffer, 0);
     
     if(strncmp(read_buffer, "NULL", 4) == 0){
         printf("Gruppo inesistente...\n");
@@ -80,7 +80,7 @@ void setup_group(char* username, char* filename, char* groupname, int check){
     
     // RICEZIONE PARAMETRI
     read_buffer = calloc(1024, sizeof(char));
-    rcv_data(socket_id, read_buffer);
+    rcv_data(socket_id, read_buffer, 0);
 
     file_to_open = fopen("param.txt","w");
     fprintf(file_to_open, "%s", read_buffer);
@@ -89,7 +89,7 @@ void setup_group(char* username, char* filename, char* groupname, int check){
 
     // RICEZIONE CHIAVI
     read_buffer = calloc(1024, sizeof(char));
-    rcv_data(socket_id, read_buffer);
+    rcv_data(socket_id, read_buffer, 0);
     
     file_to_open = fopen("keys.txt","w");
     fprintf(file_to_open, "%s", read_buffer);
@@ -107,7 +107,7 @@ void setup_CS(char* username, char* filename, char* groupname, int check){
 
     // RICEZIONE ACK
     read_buffer = calloc(1024, sizeof(char));
-    rcv_data(socket_id, read_buffer);
+    rcv_data(socket_id, read_buffer, 0);
     free(read_buffer);
     
     // INVIO GROUPNAME E FILENAME
@@ -117,7 +117,7 @@ void setup_CS(char* username, char* filename, char* groupname, int check){
     free(send_buffer);
 
     read_buffer = calloc(50, sizeof(char));
-    rcv_data(socket_id, read_buffer);
+    rcv_data(socket_id, read_buffer, 0);
 
     if(strncmp(read_buffer, "NULL", 4) == 0){
         printf("Gruppo Inesistente...\n");
@@ -225,7 +225,7 @@ void setup_CS(char* username, char* filename, char* groupname, int check){
     free(read_buffer);
 
     read_buffer = calloc(1024, sizeof(char));
-    rcv_data(socket_id, read_buffer);
+    rcv_data(socket_id, read_buffer, 0);
 
     if(strncmp(read_buffer, "FAIL", 4) == 0){
         printf("Firma errata...\n");
@@ -242,7 +242,7 @@ void setup_CS(char* username, char* filename, char* groupname, int check){
     	snd_data(socket_id, "DOWNLOAD");
 
     	read_buffer = calloc(1024, sizeof(char));
-        rcv_data(socket_id, read_buffer);
+        rcv_data(socket_id, read_buffer, 0);
         free(read_buffer);
 
         char* my_psw;
@@ -250,9 +250,18 @@ void setup_CS(char* username, char* filename, char* groupname, int check){
         snd_data(socket_id, my_psw);
 
 	   	read_buffer = calloc(1024, sizeof(char));
-	    rcv_data(socket_id, read_buffer);
+	    rcv_data(socket_id, read_buffer, 0);
 
-	    if(strncmp(read_buffer, "DOWNLOAD", 8) == 0) {
+	    if(strncmp(read_buffer, "NOT_EXIST", 9) == 0){
+	    	printf("IL FILE RICHIESTO NON ESISTE...\n");
+	        free(read_buffer);
+	        free_array(&ids);
+		    ibrs_sign_clear(&sign);
+		    ibrs_public_params_clear(&public_params);
+		    gmp_randclear(prng);
+	        exit(EXIT_FAILURE);
+	    }
+	    else if(strncmp(read_buffer, "DOWNLOAD", 8) == 0) {
 	        printf("DOWNLOAD EFFETTUATO!\n");
 	        free(read_buffer);
 	        free_array(&ids);
@@ -266,21 +275,34 @@ void setup_CS(char* username, char* filename, char* groupname, int check){
     	snd_data(socket_id, "UPLOAD");
 
     	read_buffer = calloc(500, sizeof(char));
-        rcv_data(socket_id, read_buffer);
+        rcv_data(socket_id, read_buffer, 0);
 
 	    psw_cs = calloc(500, sizeof(char));
 	    sprintf(psw_cs, "%s", read_buffer);
 	    free(read_buffer);
 
-	    send_ACK(socket_id);
+	    snd_data(socket_id, "ACK");
 
 	    read_buffer = calloc(500, sizeof(char));
-	    rcv_data(socket_id, read_buffer);
+	    rcv_data(socket_id, read_buffer, 0);
 
 	    if(strncmp(read_buffer, "READY", 5) == 0) {
 	    	/*char* command;
 	    	command = calloc(500, sizeof(char));
 	    	sprintf(command, "root@%s:/home", getenv("CS"));*/
+
+	    	FILE* file_to_open;
+	    	file_to_open = fopen(filename, "r");
+	    	if(file_to_open == NULL){
+	    		printf("FILE INESISTENTE...\n");
+	    		free(read_buffer);
+			    free_array(&ids);
+			    ibrs_sign_clear(&sign);
+			    ibrs_public_params_clear(&public_params);
+			    gmp_randclear(prng);
+		        exit(EXIT_FAILURE);
+		    }
+		    fclose(file_to_open);
 
 	    	pid_t pid = fork();
 	    	if(pid < 0){

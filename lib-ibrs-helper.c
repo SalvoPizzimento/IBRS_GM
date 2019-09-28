@@ -1,13 +1,8 @@
 #include "lib-ibrs-helper.h"
 
-void send_ACK(int socket_id){
-    if(write(socket_id, "ACK", 3) == -1){
-        printf("problema nella write sulla socket \n");
-        exit(EXIT_FAILURE);
-    }
-}
-
-void rcv_data(int socket_id, char* read_buffer){
+void rcv_data(int socket_id, char* read_buffer, int size){
+    if(size == 0)
+        size = 1024;
     if(read(socket_id, read_buffer, 1024) == -1){
         free(read_buffer);
         printf("Problema nella read della socket\n");

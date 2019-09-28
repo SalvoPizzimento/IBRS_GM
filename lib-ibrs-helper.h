@@ -30,8 +30,7 @@ int socket_id;
 char* psw_cs;
 char* ip_cs;
 int connect_socket(char serv_addr[], int port);
-void send_ACK(int socket_id);
-void rcv_data(int socket_id, char* read_buffer);
+void rcv_data(int socket_id, char* read_buffer, int size);
 void snd_data(int socket_id, char* buffer);
 
 #endif /* LIB_IBRS_HELPER_H */
