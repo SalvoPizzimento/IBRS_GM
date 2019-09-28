@@ -1,3 +1,13 @@
+/** @file lib-ibrs-gm.c
+ *  @brief Main file del Group Member.
+ *
+ *  File contenente le primitive crittografiche 
+ *  usate per il funzionamento dello schema IBRS.
+ *
+ *  @author Alessandro Midolo
+ *  @author Salvatore Pizzimento
+ */
+
 #include "lib-ibrs-gm.h"
 
 //INIT array of strings
@@ -33,11 +43,6 @@ void init_array_element_t_ibrs(array_element_t_ibrs* b, size_t size) {
 void free_array_element(array_element_t_ibrs* b) {
 	free(b->array);
 	b->size = 0;
-}
-
-//INSERT keys in index location
-void insert_keys(ibrs_key_pair* keys, ibrs_key_pair user_keys, int index) {
-	keys[index] = user_keys;
 }
 
 long get_filesize(FILE *fp){

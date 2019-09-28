@@ -1,3 +1,12 @@
+/** @file lib-ibrs-params.c
+ *  @brief Parametri per il Group Member.
+ *
+ *  File contenente le funzioni per 
+ *  gestire i parametri dello schema IBRS.
+ *
+ *  @author Alessandro Midolo
+ *  @author Salvatore Pizzimento
+ */
 #include "lib-ibrs-params.h"
 
 void load_params(ibrs_public_params_t* public_params, int level, FILE* pairing_stream, FILE* param_stream) {
@@ -24,28 +33,22 @@ void load_params(ibrs_public_params_t* public_params, int level, FILE* pairing_s
 	if(param_stream!=NULL){
         char *line[2];
         size_t len = 0;
-        
-        for(int i = 0; i < 2; i++) {
-			line[i] = NULL;
-			len = 0;
-			if(i==0){
-				if(getline(&line[i], &len, param_stream) != -1){
-					element_set_str(public_params->p, line[i], 10);
-				}
-			}
-			else{
-				if(getline(&line[i], &len, param_stream) != -1){
-					element_set_str(public_params->ppub, line[i], 10);
-				}
-			}
-        }
+
+		line[0] = NULL;
+		len = 0;
+		if(getline(&line[0], &len, param_stream) != -1){
+			element_set_str(public_params->p, line[0], 10);
+		}
+
+		line[1] = NULL;
+		len = 0;
+		if(getline(&line[1], &len, param_stream) != -1){
+			element_set_str(public_params->ppub, line[1], 10);
+		}
 
         fclose(param_stream);
 	}
-    
-    //element_printf("p: %B\n", public_params->p);
-	//element_printf("pub: %B\n", public_params->ppub);
-	
+    	
 	//INIT sha256 ctx
     sha256_init(&public_params->ctx);
 	public_params->size_from_sec_level = level/4;
@@ -53,7 +56,7 @@ void load_params(ibrs_public_params_t* public_params, int level, FILE* pairing_s
 	fclose(pairing_stream);
     free(pairing_buffer);
 
-    printf("Parameters loaded.\n");
+    printf("Parametri caricati.\n");
 }
 
 void ibrs_public_params_clear(ibrs_public_params_t* public_params) {

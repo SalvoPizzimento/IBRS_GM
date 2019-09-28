@@ -1,9 +1,21 @@
+/** @file test-ibrs-gm.c
+ *  @brief File di test per Group Member.
+ *
+ *  File contenente il funzionamento principale 
+ *  del Group Member nello schema IBRS.
+ *
+ *  @author Alessandro Midolo
+ *  @author Salvatore Pizzimento
+ */
 #include "lib-ibrs-helper.h"
 
-#define prng_sec_level 96
-#define default_sec_level 80
-
-void setup_group(char* username, char* filename, char* groupname, int check){
+/** @brief Funzione principale per creare un nuovo gruppo di firma o partecipare ad uno già esistente.
+ *  @param username username del chiamante della funzione
+ * 	@param list_ids lista delle identità partecipanti al gruppo di firma
+ *  @param groupname tag identificativo del gruppo di firma
+ * 	@param check variabile di controllo per gestire la creazione o la partecipazione al gruppo di firma
+ */
+void setup_group(char* username, char* list_ids, char* groupname, int check){
     
     char* read_buffer;
     char* send_buffer;
@@ -38,11 +50,11 @@ void setup_group(char* username, char* filename, char* groupname, int check){
         char* file_buffer;
         long file_size;
 
-        list_file = fopen(filename, "r");
+        list_file = fopen(list_ids, "r");
         file_size = get_filesize(list_file);
         file_buffer = calloc(file_size, sizeof(char));
         if(fread(file_buffer, sizeof(char), file_size, list_file) != file_size){
-            printf("problema nella read del file %s\n", filename);
+            printf("problema nella read del file %s\n", list_ids);
             exit(EXIT_FAILURE);
         }
         snd_data(socket_id, file_buffer);
@@ -97,8 +109,13 @@ void setup_group(char* username, char* filename, char* groupname, int check){
     free(read_buffer);
 }
 
-// FUNZIONE DI COMUNICAZIONE CON IL CLOUD SERVER
-void setup_CS(char* username, char* filename, char* groupname, int check){
+/** @brief Funzione principale per comunicare con il cloud server.
+ *  @param username username del chiamante della funzione
+ * 	@param filename nome del file da scaricare/caricare
+ *  @param groupname tag identificativo del gruppo di firma
+ * 	@param check variabile di controllo per gestire il download o l'upload del file
+ */
+void setup_cs(char* username, char* filename, char* groupname, int check){
     char* send_buffer;
     char* read_buffer;
 
@@ -349,7 +366,7 @@ int main(int argc, char *argv[]) {
         char* ip_ga;
         ip_ga = getenv("GA");
 
-        socket_fd = connect_socket(ip_ga, 8080);
+        socket_fd = connect_socket(ip_ga, PORT_GA);
         socket_id = socket_fd;
 
         printf("\nScrivere \"1\" per creare un gruppo di condivisione, \nScrivere \"2\" per partecipare a un gruppo\n");
@@ -405,7 +422,7 @@ int main(int argc, char *argv[]) {
         char* ip_cs;
         ip_cs = getenv("CS");
 
-        socket_fd = connect_socket(ip_cs, 8888);
+        socket_fd = connect_socket(ip_cs, PORT_CS);
         socket_id = socket_fd;
         
         printf("\nScrivere \"1\" per effettuare un download, \nScrivere \"2\" per effettuare un upload.\n");
@@ -437,9 +454,9 @@ int main(int argc, char *argv[]) {
             groupname[strcspn(groupname, "\r\n")] = 0;
             
             if(atoi(cmd) == 1)
-                setup_CS(username, filename, groupname, 1);
+                setup_cs(username, filename, groupname, 1);
             else
-                setup_CS(username, filename, groupname, 0);
+                setup_cs(username, filename, groupname, 0);
         }
         else{
             printf("Comando errato..\n");

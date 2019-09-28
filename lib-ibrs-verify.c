@@ -1,3 +1,12 @@
+/** @file lib-ibrs-verify.c
+ *  @brief Verifica per il Group Member.
+ *
+ *  File contenente le funzioni per 
+ *  gestire la verifica della firma dello schema IBRS.
+ *
+ *  @author Alessandro Midolo
+ *  @author Salvatore Pizzimento
+ */
 #include "lib-ibrs-verify.h"
 
 bool ibrs_sign_ver(ibrs_public_params_t* public_params, array_ibrs l, const uint8_t* msg, ibrs_sig* sign) {
@@ -78,9 +87,9 @@ bool ibrs_sign_ver(ibrs_public_params_t* public_params, array_ibrs l, const uint
 	pairing_apply(p_v, sign->v, public_params->p, public_params->pairing);
 	
     if ((result = (element_cmp(ppub_sum, p_v) == 0))) {
-		pmesg(msg_very_verbose, "sign verified on message!");
+		pmesg(msg_very_verbose, "Firma verificata sul messaggio!");
     } else {
-        pmesg(msg_very_verbose, "verify failed!");
+        pmesg(msg_very_verbose, "Verifica fallita!");
     }
 
 	//CLEARS of all element used

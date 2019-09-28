@@ -1,3 +1,12 @@
+/** @file lib-ibrs-helper.c
+ *  @brief Helper per il Group Member.
+ *
+ *  Helper contenente le funzioni usate nell'applicazione
+ *  per la comunicazione tra le classi.
+ *
+ *  @author Alessandro Midolo
+ *  @author Salvatore Pizzimento
+ */
 #include "lib-ibrs-helper.h"
 
 void rcv_data(int socket_id, char* read_buffer, int size){

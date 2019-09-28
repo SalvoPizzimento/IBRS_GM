@@ -1,3 +1,12 @@
+/** @file lib-ibrs-sign.c
+ *  @brief Firma per il Group Member.
+ *
+ *  File contenente le funzioni per 
+ *  gestire la firma dello schema IBRS.
+ *
+ *  @author Alessandro Midolo
+ *  @author Salvatore Pizzimento
+ */
 #include "lib-ibrs-sign.h"
 
 void ibrs_sign(ibrs_public_params_t* public_params, array_ibrs l, const uint8_t* msg,
@@ -65,7 +74,7 @@ void ibrs_sign(ibrs_public_params_t* public_params, array_ibrs l, const uint8_t*
 				element_from_hash(el_h_i, h_i, public_params->size_from_sec_level);
 			}
 			else {
-				printf("error on asprint!");
+				printf("Errore nella funzione asprint!");
 				return;
 			}
 			
@@ -105,7 +114,7 @@ void ibrs_sign(ibrs_public_params_t* public_params, array_ibrs l, const uint8_t*
 		sha256_digest(&(public_params->ctx), public_params->size_from_sec_level, h_s);
 	}
 	else {
-		printf("error on asprint!");
+		printf("Errore nella funzione asprint!");
 		return;
 	}
 
@@ -142,5 +151,5 @@ void ibrs_sign(ibrs_public_params_t* public_params, array_ibrs l, const uint8_t*
 	fclose(sign_stream);
 	free(l_buf);
 
-	printf("Sign made.\n");
+	printf("Firma effettuata.\n");
 }
