@@ -1,17 +1,15 @@
 #include "lib-ibrs-helper.h"
 
 void rcv_data(int socket_id, char* read_buffer, int size){
-    if(size == 0)
-        size = 1024;
-    if(read(socket_id, read_buffer, 1024) == -1){
+    if(read(socket_id, read_buffer, size) == -1){
         free(read_buffer);
         printf("Problema nella read della socket\n");
         exit(EXIT_FAILURE);
     }
 }
 
-void snd_data(int socket_id, char* send_buffer){
-    if(write(socket_id, send_buffer, strlen(send_buffer)) == -1) {
+void snd_data(int socket_id, char* send_buffer, int size){
+    if(write(socket_id, send_buffer, size) == -1) {
         printf("problema nella write sulla socket \n");
         free(send_buffer);
         exit(EXIT_FAILURE);
