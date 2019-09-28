@@ -6,30 +6,28 @@
 void setup_group(char* username, char* filename, char* groupname, int check){
     
     char* read_buffer;
-    char send[50];
-    sprintf(send, "%s,%s", username, groupname);
+    char* send_buffer;
+    send_buffer = calloc(1024, sizeof(char));
+    sprintf(send_buffer, "%s,%s", username, groupname);
 
     // INVIO USERNAME E GROUPNAME
-    if(write(socket_id, send, strlen(send)) == -1) {
-        printf("Errore nella write sulla socket.");
+    snd_data(socket_id, send_buffer);
+	free(send_buffer);
+
+    // CONFERMA DI AVVENUTA RICEZIONE
+    read_buffer = calloc(1024, sizeof(char));
+    rcv_data(socket_id, read_buffer);
+
+    if(strncmp(read_buffer, "NULL", 4) == 0){
+        printf("Username o Groupname invalido..\n");
+    	free(read_buffer);
         exit(EXIT_FAILURE);
     }
 
-    // CONFERMA DI AVVENUTA RICEZIONE
-    read_buffer = calloc(50, sizeof(char));
-    if(read(socket_id, read_buffer, 50) == -1) {
-        printf("problema nella read dello Stream \n");
+    if(strncmp(read_buffer, "ACK", 3) != 0){
+    	printf("Server non raggiungibile..\n");
+    	free(read_buffer);
         exit(EXIT_FAILURE);
-    }
-    if(strncmp(read_buffer, "NULL", 4) == 0){
-        printf("Username o Groupname invalido..\n");
-        exit(EXIT_FAILURE);
-    }
-    while(strncmp(read_buffer, "ACK", 3) != 0){
-        if(read(socket_id, read_buffer, 5) == -1){
-            printf("problema nella read dello Stream \n");
-            exit(EXIT_FAILURE);
-        }
     }
     free(read_buffer);
 
@@ -47,26 +45,16 @@ void setup_group(char* username, char* filename, char* groupname, int check){
             printf("problema nella read del file %s\n", filename);
             exit(EXIT_FAILURE);
         }
-        if(write(socket_id, file_buffer, strlen(file_buffer)) == -1) {
-            printf("Errore nella write sulla socket.");
-            exit(EXIT_FAILURE);
-        }
+        snd_data(socket_id, file_buffer);
         free(file_buffer);
     }
-    else{
-        if(write(socket_id, "NULL", 4) == -1) {
-            printf("Errore nella write sulla socket.");
-            exit(EXIT_FAILURE);
-        }
-    }
+    else
+    	snd_data(socket_id, "NULL");
 
     FILE *file_to_open;
     // RICEZIONE DATI PAIRING
     read_buffer = calloc(1024, sizeof(char));
-    if(read(socket_id, read_buffer, 1024) == -1) {
-        printf("problema nella read della socket \n");
-        exit(EXIT_FAILURE);
-    }
+    rcv_data(socket_id, read_buffer);
     
     if(strncmp(read_buffer, "NULL", 4) == 0){
         printf("Gruppo inesistente...\n");
@@ -92,10 +80,7 @@ void setup_group(char* username, char* filename, char* groupname, int check){
     
     // RICEZIONE PARAMETRI
     read_buffer = calloc(1024, sizeof(char));
-    if(read(socket_id, read_buffer, 1024) == -1) {
-        printf("problema nella read della socket \n");
-        exit(EXIT_FAILURE);
-    }
+    rcv_data(socket_id, read_buffer);
 
     file_to_open = fopen("param.txt","w");
     fprintf(file_to_open, "%s", read_buffer);
@@ -104,10 +89,7 @@ void setup_group(char* username, char* filename, char* groupname, int check){
 
     // RICEZIONE CHIAVI
     read_buffer = calloc(1024, sizeof(char));
-    if(read(socket_id, read_buffer, 1024) == -1) {
-        printf("problema nella read della socket \n");
-        exit(EXIT_FAILURE);
-    }
+    rcv_data(socket_id, read_buffer);
     
     file_to_open = fopen("keys.txt","w");
     fprintf(file_to_open, "%s", read_buffer);
@@ -115,46 +97,41 @@ void setup_group(char* username, char* filename, char* groupname, int check){
     free(read_buffer);
 }
 
+// FUNZIONE DI COMUNICAZIONE CON IL CLOUD SERVER
 void setup_CS(char* username, char* filename, char* groupname, int check){
     char* send_buffer;
     char* read_buffer;
-    char ack[5];
 
     // INVIO USERNAME
-    if(write(socket_id, username, strlen(username)) == -1) {
-        printf("Errore nella write sulla socket.");
-        exit(EXIT_FAILURE);
-    }
-    while(strncmp(ack, "ACK", 3) != 0){
-        // CONFERMA DI AVVENUTA RICEZIONE
-        if(read(socket_id, ack, 3) == -1){
-            printf("problema nella read dello Stream \n");
-            exit(EXIT_FAILURE);
-        }
-    }
+    snd_data(socket_id, username);
+
+    // RICEZIONE ACK
+    read_buffer = calloc(1024, sizeof(char));
+    rcv_data(socket_id, read_buffer);
+    free(read_buffer);
     
+    // INVIO GROUPNAME E FILENAME
     send_buffer = calloc(1024, sizeof(char));
     sprintf(send_buffer, "%s,%s", groupname, filename);
-    if(write(socket_id, send_buffer, 1024) == -1) {
-        printf("problema nella write sulla socket \n");
-        exit(EXIT_FAILURE);
-    }
+    snd_data(socket_id, send_buffer);
+    free(send_buffer);
 
     read_buffer = calloc(50, sizeof(char));
-    if(read(socket_id, read_buffer, 50) == -1) {
-        printf("problema nella read della socket \n");
-        exit(EXIT_FAILURE);
-    }
+    rcv_data(socket_id, read_buffer);
+
     if(strncmp(read_buffer, "NULL", 4) == 0){
         printf("Gruppo Inesistente...\n");
+        free(read_buffer);
         exit(EXIT_FAILURE);
     }
     else if(strncmp(read_buffer, "FAIL_AUTH", 9) == 0){
         printf("Autenticazione fallita...\n");
+        free(read_buffer);
         exit(EXIT_FAILURE);
     }
     else if(strncmp(read_buffer, "ACK", 3) != 0){
         printf("Cloud Server non risponde..\n");
+        free(read_buffer);
         exit(EXIT_FAILURE);
     }
 
@@ -232,105 +209,99 @@ void setup_CS(char* username, char* filename, char* groupname, int check){
     file_buffer = calloc(file_size, sizeof(char));
     if(fread(file_buffer, sizeof(char), file_size, list_file) != file_size){
         printf("problema nella read del file sign.txt\n");
+        free(file_buffer);
+    	fclose(list_file);
+        free(read_buffer);
+        free_array(&ids);
+	    ibrs_sign_clear(&sign);
+	    ibrs_public_params_clear(&public_params);
+	    gmp_randclear(prng);
         exit(EXIT_FAILURE);
     }
-    if(write(socket_id, file_buffer, strlen(file_buffer)) == -1) {
-        printf("Errore nella write sulla socket.");
-        exit(EXIT_FAILURE);
-    }
+    snd_data(socket_id, file_buffer);
+
     free(file_buffer);
     fclose(list_file);
     free(read_buffer);
 
     read_buffer = calloc(1024, sizeof(char));
-    if(read(socket_id, read_buffer, 1024) == -1){
-        printf("Problema nella read della socket\n");
-        exit(EXIT_FAILURE);
-    }
+    rcv_data(socket_id, read_buffer);
+
     if(strncmp(read_buffer, "FAIL", 4) == 0){
         printf("Firma errata...\n");
+        free(read_buffer);
+        free_array(&ids);
+	    ibrs_sign_clear(&sign);
+	    ibrs_public_params_clear(&public_params);
+	    gmp_randclear(prng);
         exit(EXIT_FAILURE);
     }
     free(read_buffer);
 
     if(check == 1){
-    	read_buffer = calloc(500, sizeof(char));
-        if(write(socket_id, "DOWNLOAD", 8) == -1) {
-            printf("problema nella write sulla socket \n");
-            exit(EXIT_FAILURE);
-        }
-        if(read(socket_id, read_buffer, 500) == -1){
-        	printf("Problema nella read della socket\n");
-        	exit(EXIT_FAILURE);
-        }
+    	snd_data(socket_id, "DOWNLOAD");
+
+    	read_buffer = calloc(1024, sizeof(char));
+        rcv_data(socket_id, read_buffer);
+        free(read_buffer);
+
         char* my_psw;
         my_psw = getenv("PSW");
-        if(write(socket_id, my_psw, strlen(my_psw)) == -1){
-	    	printf("problema nella write sulla socket \n");
-	        exit(EXIT_FAILURE);
-	   	}
-	   	free(read_buffer);
+        snd_data(socket_id, my_psw);
 
 	   	read_buffer = calloc(1024, sizeof(char));
-	    if(read(socket_id, read_buffer, 1024) == -1){
-	        printf("Problema nella read della socket\n");
-	        exit(EXIT_FAILURE);
-	    }
+	    rcv_data(socket_id, read_buffer);
 
 	    if(strncmp(read_buffer, "DOWNLOAD", 8) == 0) {
 	        printf("DOWNLOAD EFFETTUATO!\n");
+	        free(read_buffer);
+	        free_array(&ids);
+		    ibrs_sign_clear(&sign);
+		    ibrs_public_params_clear(&public_params);
+		    gmp_randclear(prng);
 	        exit(EXIT_SUCCESS);
 	    }
     }
     else{
-        if(write(socket_id, "UPLOAD", 6) == -1) {
-            printf("problema nella write sulla socket \n");
-            exit(EXIT_FAILURE);
-        }
+    	snd_data(socket_id, "UPLOAD");
 
-        read_buffer = calloc(500, sizeof(char));
-        if(read(socket_id, read_buffer, 500) == -1){
-        	printf("Problema nella read della socket\n");
-        	exit(EXIT_FAILURE);
-        }
-        free(read_buffer);
-
-        read_buffer = calloc(1024, sizeof(char));
-	    if(read(socket_id, read_buffer, 1024) == -1){
-	        printf("Problema nella read della socket\n");
-	        exit(EXIT_FAILURE);
-	    }
+    	read_buffer = calloc(500, sizeof(char));
+        rcv_data(socket_id, read_buffer);
 
 	    psw_cs = calloc(500, sizeof(char));
 	    sprintf(psw_cs, "%s", read_buffer);
 	    free(read_buffer);
 
-	    if(write(socket_id, "ACK", 3) == -1){
-	    	printf("problema nella write sulla socket \n");
-            exit(EXIT_FAILURE);
-	    }
+	    send_ACK(socket_id);
 
-	    read_buffer = calloc(1024, sizeof(char));
-	    if(read(socket_id, read_buffer, 1024) == -1){
-	        printf("Problema nella read della socket\n");
-	        exit(EXIT_FAILURE);
-	    }
+	    read_buffer = calloc(500, sizeof(char));
+	    rcv_data(socket_id, read_buffer);
 
 	    if(strncmp(read_buffer, "READY", 5) == 0) {
+	    	/*char* command;
+	    	command = calloc(500, sizeof(char));
+	    	sprintf(command, "root@%s:/home", getenv("CS"));*/
+
 	    	pid_t pid = fork();
 	    	if(pid < 0){
 				printf("errore nella fork");
 			}
 			else if(pid == 0){
-				execl("/usr/bin/sshpass", "sshpass", "-p", psw_cs, "/usr/bin/scp", filename, "root@172.17.0.5:/home", (char*)0);
+				execl("/usr/bin/sshpass", "sshpass", "-p", psw_cs, "/usr/bin/scp", filename, "root@172.17.0.2:/home", (char*)0);
 			}
+
 	        printf("UPLOAD EFFETTUATO!\n");
 	    	free(psw_cs);
+	    	//free(command);
+		    free(read_buffer);
+		    free_array(&ids);
+		    ibrs_sign_clear(&sign);
+		    ibrs_public_params_clear(&public_params);
+		    gmp_randclear(prng);
 	        exit(EXIT_SUCCESS);
 	    }
     }
 
-    free(send_buffer);
     free(read_buffer);
     free_array(&ids);
     ibrs_sign_clear(&sign);
