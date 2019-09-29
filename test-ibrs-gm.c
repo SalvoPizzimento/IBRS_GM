@@ -58,8 +58,10 @@ void setup_group(char* username, char* filename, char* groupname, int check){
         snd_data(socket_id, file_buffer, strlen(file_buffer));
         free(file_buffer);
     }
-    else
+    else{
+        snd_data(socket_id, "4", 1);
     	snd_data(socket_id, "NULL", 4);
+    }
 
     FILE *file_to_open;
     // RICEZIONE DATI PAIRING
