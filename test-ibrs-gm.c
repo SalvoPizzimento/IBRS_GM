@@ -39,6 +39,10 @@ void setup_group(char* username, char* filename, char* groupname, int check){
         long file_size;
 
         list_file = fopen(filename, "r");
+        if(list_file == NULL){
+        	printf("File lista utenti inesistente...\n");
+        	exit(EXIT_FAILURE);
+        }
         file_size = get_filesize(list_file);
 
         read_buffer = calloc(500, sizeof(char));
