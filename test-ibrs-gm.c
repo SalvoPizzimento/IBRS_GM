@@ -113,6 +113,7 @@ void setup_group(char* username, char* filename, char* groupname, int check){
 void setup_CS(char* username, char* filename, char* groupname, int check){
     char* send_buffer;
     char* read_buffer;
+    char* key_buffer;
 
     // INVIO USERNAME
     snd_data(socket_id, username, strlen(username));
@@ -256,7 +257,6 @@ void setup_CS(char* username, char* filename, char* groupname, int check){
     }
     free(read_buffer);
 
-    char* key_buffer;
     key_buffer = calloc(2048, sizeof(char));
     rcv_data(socket_id, key_buffer, 2048);
 
@@ -266,29 +266,28 @@ void setup_CS(char* username, char* filename, char* groupname, int check){
 	   	read_buffer = calloc(1024, sizeof(char));
 	    rcv_data(socket_id, read_buffer, 1024);
 
-	    /*if(strncmp(read_buffer, "NOT_EXIST", 9) == 0){
-	    	printf("IL FILE RICHIESTO NON ESISTE...\n");
-	        free(read_buffer);
-	        free_array(&ids);
-		    ibrs_sign_clear(&sign);
-		    ibrs_public_params_clear(&public_params);
-		    gmp_randclear(prng);
-	        exit(EXIT_FAILURE);
-	    }*/
         char* command;
         command = calloc(500, sizeof(char));
         sprintf(command, "cs@%s:/home/%s", getenv("CS"), filename);
 
+
 	    if(strncmp(read_buffer, "DOWNLOAD", 8) == 0) {
-	        pid_t pid = fork();
+            /*pid_t pid = fork();
             if(pid < 0){
                 printf("errore nella fork");
             }
             else if(pid == 0){
                 execl("/usr/bin/scp", "scp", "-i", key_buffer, "-o", "UserKnownHostsFile=/dev/null", "-o", "StrictHostKeyChecking=no", command, ".", (char*)0);
                 snd_data(socket_id, "ACK", 3);
-            }
-            free(command);
+            }*/
+            snd_data(socket_id, "ACK", 3);
+	        printf("DOWNLOAD EFFETTUATO!\n");
+	        free(read_buffer);
+	        free_array(&ids);
+		    ibrs_sign_clear(&sign);
+		    ibrs_public_params_clear(&public_params);
+		    gmp_randclear(prng);
+	        exit(EXIT_SUCCESS);
 	    }
     }
     else{
@@ -297,11 +296,10 @@ void setup_CS(char* username, char* filename, char* groupname, int check){
 	    read_buffer = calloc(500, sizeof(char));
 	    rcv_data(socket_id, read_buffer, 500);
 
-        char* command;
-        command = calloc(500, sizeof(char));
-        sprintf(command, "cs@%s:/home", getenv("CS"));
-
 	    if(strncmp(read_buffer, "READY", 5) == 0) {
+	    	char* command;
+	    	command = calloc(500, sizeof(char));
+	    	sprintf(command, "cs@%s:/home", getenv("CS"));
 
 	    	FILE* file_to_open;
 	    	file_to_open = fopen(filename, "r");
@@ -316,16 +314,17 @@ void setup_CS(char* username, char* filename, char* groupname, int check){
 		    }
 		    fclose(file_to_open);
 
-	    	pid_t pid = fork();
+	    	/*pid_t pid = fork();
 	    	if(pid < 0){
 				printf("errore nella fork");
 			}
 			else if(pid == 0){
-				execl("/usr/bin/scp", "scp", "-i", key_buffer, "-o", "UserKnownHostsFile=/dev/null", "-o", "StrictHostKeyChecking=no", filename, command, (char*)0);
-                snd_data(socket_id, "ACK", 3);
-			}
+				execl("/usr/bin/scp", "scp", "-i", key_buffer, "-o", "UserKnownHostsFile=/dev/null", "-o", "StrictHostKeyChecking=no", filename, comamnd, (char*)0);
+			}*/
 
+            snd_data(socket_id, "ACK", 3);
 	        printf("UPLOAD EFFETTUATO!\n");
+	    	free(command);
 		    free(read_buffer);
 		    free_array(&ids);
 		    ibrs_sign_clear(&sign);
