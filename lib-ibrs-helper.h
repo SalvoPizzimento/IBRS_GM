@@ -26,6 +26,7 @@
 #include <pbc/pbc.h>
 #include <time.h> 
 #include <sys/stat.h>
+#include <sys/wait.h>
 
 #include "lib-timing.h"
 #include "lib-ibrs-gm.h"

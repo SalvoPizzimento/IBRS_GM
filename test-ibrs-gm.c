@@ -1,6 +1,5 @@
 #include "lib-ibrs-helper.h"
 
-#include <sys/wait.h>
 #define prng_sec_level 96
 #define default_sec_level 80
 
@@ -351,7 +350,6 @@ void setup_CS(char* username, char* filename, char* groupname, int check){
 			}
 			else if(pid == 0){
 				execl("/usr/bin/sudo", "/usr/bin/scp", "scp", "-i", "KeyPair.pem", "-o", "UserKnownHostsFile=/dev/null", "-o", "StrictHostKeyChecking=no", filename, command, (char*)0);
-                //snd_data(socket_id, "ACK", 3);
 			}
 
             wait(&pid);
@@ -466,7 +464,7 @@ int main(int argc, char *argv[]) {
         username[strcspn(username, "\r\n")] = 0;
         
         if(atoi(cmd) == 1 || atoi(cmd) == 2){
-            printf("Inserire il nome del file da scaricare...\n");
+            printf("Inserire il nome del file...\n");
             if(fgets(filename, sizeof(filename), stdin) == NULL) {
                 printf("problema nella fgets del filename\n");
                 exit(EXIT_FAILURE);
