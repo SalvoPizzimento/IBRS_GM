@@ -85,6 +85,8 @@ void setup_group(char* username, char* filename, char* groupname, int check){
         exit(EXIT_FAILURE);
     }
     
+
+    printf("pairing: %s ---- %ld\n", read_buffer, strlen(read_buffer));
     file_to_open = fopen("pairing.txt", "w");
     fprintf(file_to_open, "%s", read_buffer);
     fclose(file_to_open);
@@ -93,15 +95,19 @@ void setup_group(char* username, char* filename, char* groupname, int check){
     // RICEZIONE PARAMETRI
     read_buffer = calloc(1024, sizeof(char));
     rcv_data(socket_id, read_buffer, 1024);
+    printf("param: %s ---- %ld\n", read_buffer, strlen(read_buffer));
 
     file_to_open = fopen("param.txt","w");
     fprintf(file_to_open, "%s", read_buffer);
     fclose(file_to_open);
     free(read_buffer);
 
+    snd(socket_id, "ACK", 3);
+
     // RICEZIONE CHIAVI
     read_buffer = calloc(1024, sizeof(char));
     rcv_data(socket_id, read_buffer, 1024);
+    printf("key_buffer: %s ---- %ld\n", read_buffer, strlen(read_buffer));
     
     file_to_open = fopen("keys.txt","w");
     fprintf(file_to_open, "%s", read_buffer);
@@ -217,6 +223,8 @@ void setup_CS(char* username, char* filename, char* groupname, int check){
     FILE* list_file;
     char* file_buffer;
     long file_size;
+    bool end = false;
+    int offset = 0;
 
     list_file = fopen("sign.txt", "r");
     file_size = get_filesize(list_file);
@@ -225,8 +233,7 @@ void setup_CS(char* username, char* filename, char* groupname, int check){
     sprintf(read_buffer, "%ld", file_size);
     snd_data(socket_id, read_buffer, 500);
 
-    file_buffer = calloc(file_size, sizeof(char));
-    if(fread(file_buffer, sizeof(char), file_size, list_file) != file_size){
+    /*if(fread(file_buffer, sizeof(char), file_size, list_file) != file_size){
         printf("problema nella read del file sign.txt\n");
         free(file_buffer);
     	fclose(list_file);
@@ -236,8 +243,22 @@ void setup_CS(char* username, char* filename, char* groupname, int check){
 	    ibrs_public_params_clear(&public_params);
 	    gmp_randclear(prng);
         exit(EXIT_FAILURE);
+    }*/
+
+    while(!end){
+        if(file_size < 1024)
+            end = true;
+        file_buffer = calloc(1024, sizeof(char));
+        fseek(list_file, offset, SEEK_SET);
+        if(fread(file_buffer, sizeof(char), 1024, list_file) > 1024){
+            exit(EXIT_FAILURE);
+        }
+        if(!end){
+            offset = offset + 1024;
+            file_size = file_size - 1024;
+        }
+        snd_data(socket_id, file_buffer, strlen(file_buffer));
     }
-    snd_data(socket_id, file_buffer, strlen(file_buffer));
 
     free(file_buffer);
     fclose(list_file);
