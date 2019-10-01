@@ -85,8 +85,6 @@ void setup_group(char* username, char* filename, char* groupname, int check){
         exit(EXIT_FAILURE);
     }
     
-
-    printf("pairing: %s ---- %ld\n", read_buffer, strlen(read_buffer));
     file_to_open = fopen("pairing.txt", "w");
     fprintf(file_to_open, "%s", read_buffer);
     fclose(file_to_open);
@@ -95,19 +93,17 @@ void setup_group(char* username, char* filename, char* groupname, int check){
     // RICEZIONE PARAMETRI
     read_buffer = calloc(1024, sizeof(char));
     rcv_data(socket_id, read_buffer, 1024);
-    printf("param: %s ---- %ld\n", read_buffer, strlen(read_buffer));
 
     file_to_open = fopen("param.txt","w");
     fprintf(file_to_open, "%s", read_buffer);
     fclose(file_to_open);
     free(read_buffer);
 
-    snd(socket_id, "ACK", 3);
+    snd_data(socket_id, "ACK", 3);
 
     // RICEZIONE CHIAVI
     read_buffer = calloc(1024, sizeof(char));
     rcv_data(socket_id, read_buffer, 1024);
-    printf("key_buffer: %s ---- %ld\n", read_buffer, strlen(read_buffer));
     
     file_to_open = fopen("keys.txt","w");
     fprintf(file_to_open, "%s", read_buffer);
@@ -279,13 +275,22 @@ void setup_CS(char* username, char* filename, char* groupname, int check){
     free(read_buffer);
 
     key_buffer = calloc(2048, sizeof(char));
-    rcv_data(socket_id, key_buffer, 2048);
+    offset = 0;
+    for(int i=0; i<2; i++){
+        read_buffer = calloc(1024, sizeof(char));
+        rcv_data(socket_id, read_buffer, 1024);
+        printf("read_buffer: %s  ---- %ld\n", read_buffer, strlen(read_buffer));
+        offset += sprintf(key_buffer+offset, "%s", read_buffer);
+        free(read_buffer);
+    }
+    free(key_buffer);
 
     if(check == 1){
     	snd_data(socket_id, "DOWNLOAD", 8);
 
 	   	read_buffer = calloc(1024, sizeof(char));
 	    rcv_data(socket_id, read_buffer, 1024);
+        printf("READ_BUFFER: %s\n", read_buffer);
 
         char* command;
         command = calloc(500, sizeof(char));
