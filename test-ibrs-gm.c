@@ -56,10 +56,13 @@ void setup_group(char* username, char* filename, char* groupname, int check){
             exit(EXIT_FAILURE);
         }
         snd_data(socket_id, file_buffer, strlen(file_buffer));
+        fclose(list_file);
         free(file_buffer);
     }
     else{
+        // INVIO GRANDEZZA FILE FITTIZIA
         snd_data(socket_id, "4", 1);
+        // INVIO FILE IDS NULLO
     	snd_data(socket_id, "NULL", 4);
     }
 
@@ -70,18 +73,22 @@ void setup_group(char* username, char* filename, char* groupname, int check){
     
     if(strncmp(read_buffer, "NULL", 4) == 0){
         printf("Gruppo inesistente...\n");
+        free(read_buffer);
         exit(EXIT_FAILURE);
     }
     else if(strncmp(read_buffer, "EXIST", 5) == 0){
         printf("Gruppo già esistente...\n");
+        free(read_buffer);
         exit(EXIT_FAILURE);
     }
     else if(strncmp(read_buffer, "FAIL_AUTH", 9) == 0){
         printf("Autenicazione fallita...\n");
+        free(read_buffer);
         exit(EXIT_FAILURE);
     }
     else if(strncmp(read_buffer, "EMPTY", 5) == 0){
-        printf("File IDS non valido...\n");
+        printf("File IDS non valido...\n");ù
+        free(read_buffer);
         exit(EXIT_FAILURE);
     }
     
@@ -148,7 +155,9 @@ void setup_CS(char* username, char* filename, char* groupname, int check){
         free(read_buffer);
         exit(EXIT_FAILURE);
     }
-    free(read_buffer);
+    else{
+        free(read_buffer);
+    }
 
     // MANDARE LA FIRMA DEL FILENAME
     srand(time(NULL));
@@ -228,6 +237,7 @@ void setup_CS(char* username, char* filename, char* groupname, int check){
     sprintf(read_buffer, "%ld", file_size);
     printf("INVIO DELLA SIZE\n");
     snd_data(socket_id, read_buffer, 500);
+    free(read_buffer);
 
     /*if(fread(file_buffer, sizeof(char), file_size, list_file) != file_size){
         printf("problema nella read del file sign.txt\n");
@@ -260,7 +270,6 @@ void setup_CS(char* username, char* filename, char* groupname, int check){
 
     free(file_buffer);
     fclose(list_file);
-    free(read_buffer);
 
     read_buffer = calloc(1024, sizeof(char));
     rcv_data(socket_id, read_buffer, 1024);
@@ -302,6 +311,8 @@ void setup_CS(char* username, char* filename, char* groupname, int check){
 
 
 	    if(strncmp(read_buffer, "DOWNLOAD", 8) == 0) {
+            free(read_buffer);
+
             pid_t pid = fork();
             if(pid < 0){
                 printf("errore nella fork");
@@ -312,13 +323,17 @@ void setup_CS(char* username, char* filename, char* groupname, int check){
             wait(&pid);
             snd_data(socket_id, "ACK", 3);
 	        printf("DOWNLOAD EFFETTUATO!\n");
-	        free(read_buffer);
+            free(command);
 	        free_array(&ids);
 		    ibrs_sign_clear(&sign);
 		    ibrs_public_params_clear(&public_params);
 		    gmp_randclear(prng);
 	        exit(EXIT_SUCCESS);
 	    }
+        else{
+            free(command);
+            free(read_buffer);
+        }
     }
     else{
     	snd_data(socket_id, "UPLOAD", 6);
@@ -327,6 +342,8 @@ void setup_CS(char* username, char* filename, char* groupname, int check){
 	    rcv_data(socket_id, read_buffer, 500);
 
 	    if(strncmp(read_buffer, "READY", 5) == 0) {
+            free(read_buffer);
+
 	    	char* command;
 	    	command = calloc(500, sizeof(char));
 	    	sprintf(command, "ubuntu@%s:/home/ubuntu/", getenv("CS"));
@@ -335,7 +352,6 @@ void setup_CS(char* username, char* filename, char* groupname, int check){
 	    	file_to_open = fopen(filename, "r");
 	    	if(file_to_open == NULL){
 	    		printf("FILE INESISTENTE...\n");
-	    		free(read_buffer);
 			    free_array(&ids);
 			    ibrs_sign_clear(&sign);
 			    ibrs_public_params_clear(&public_params);
@@ -357,16 +373,16 @@ void setup_CS(char* username, char* filename, char* groupname, int check){
             
 	        printf("UPLOAD EFFETTUATO!\n");
 	    	free(command);
-		    free(read_buffer);
 		    free_array(&ids);
 		    ibrs_sign_clear(&sign);
 		    ibrs_public_params_clear(&public_params);
 		    gmp_randclear(prng);
 	        exit(EXIT_SUCCESS);
 	    }
+        else
+            free(read_buffer);
     }
 
-    free(read_buffer);
     free_array(&ids);
     ibrs_sign_clear(&sign);
     ibrs_public_params_clear(&public_params);
