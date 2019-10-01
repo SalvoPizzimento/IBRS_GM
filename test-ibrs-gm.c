@@ -1,5 +1,6 @@
 #include "lib-ibrs-helper.h"
 
+#include <sys/wait.h>
 #define prng_sec_level 96
 #define default_sec_level 80
 
@@ -115,7 +116,6 @@ void setup_group(char* username, char* filename, char* groupname, int check){
 void setup_CS(char* username, char* filename, char* groupname, int check){
     char* send_buffer;
     char* read_buffer;
-    char* key_buffer;
 
     // INVIO USERNAME
     snd_data(socket_id, username, strlen(username));
@@ -227,6 +227,7 @@ void setup_CS(char* username, char* filename, char* groupname, int check){
 
     read_buffer = calloc(500, sizeof(char));
     sprintf(read_buffer, "%ld", file_size);
+    printf("INVIO DELLA SIZE\n");
     snd_data(socket_id, read_buffer, 500);
 
     /*if(fread(file_buffer, sizeof(char), file_size, list_file) != file_size){
@@ -256,12 +257,15 @@ void setup_CS(char* username, char* filename, char* groupname, int check){
         snd_data(socket_id, file_buffer, strlen(file_buffer));
     }
 
+    printf("INVIO DELLA FIRMA\n");
+
     free(file_buffer);
     fclose(list_file);
     free(read_buffer);
 
     read_buffer = calloc(1024, sizeof(char));
     rcv_data(socket_id, read_buffer, 1024);
+    printf("RICEZIONE RISULTATO VERIFICA\n");
 
     if(strncmp(read_buffer, "FAIL", 4) == 0){
         printf("Firma errata...\n");
@@ -273,17 +277,18 @@ void setup_CS(char* username, char* filename, char* groupname, int check){
         exit(EXIT_FAILURE);
     }
     free(read_buffer);
-
+/*
     key_buffer = calloc(2048, sizeof(char));
     offset = 0;
     for(int i=0; i<2; i++){
         read_buffer = calloc(1024, sizeof(char));
         rcv_data(socket_id, read_buffer, 1024);
-        printf("read_buffer: %s  ---- %ld\n", read_buffer, strlen(read_buffer));
+        printf("READ_BUFFER: %s", read_buffer);
         offset += sprintf(key_buffer+offset, "%s", read_buffer);
         free(read_buffer);
     }
-    free(key_buffer);
+    printf("KEYPAIR: %s", key_buffer);
+    free(key_buffer);*/
 
     if(check == 1){
     	snd_data(socket_id, "DOWNLOAD", 8);
@@ -294,18 +299,18 @@ void setup_CS(char* username, char* filename, char* groupname, int check){
 
         char* command;
         command = calloc(500, sizeof(char));
-        sprintf(command, "cs@%s:/home/%s", getenv("CS"), filename);
+        sprintf(command, "ubuntu@%s:/home/ubuntu/%s", getenv("CS"), filename);
 
 
 	    if(strncmp(read_buffer, "DOWNLOAD", 8) == 0) {
-            /*pid_t pid = fork();
+            pid_t pid = fork();
             if(pid < 0){
                 printf("errore nella fork");
             }
             else if(pid == 0){
-                execl("/usr/bin/scp", "scp", "-i", key_buffer, "-o", "UserKnownHostsFile=/dev/null", "-o", "StrictHostKeyChecking=no", command, ".", (char*)0);
-                snd_data(socket_id, "ACK", 3);
-            }*/
+                execl("/usr/bin/sudo", "/usr/bin/scp", "scp", "-i", "KeyPair.pem", "-o", "UserKnownHostsFile=/dev/null", "-o", "StrictHostKeyChecking=no", command, ".", (char*)0);
+            }
+            wait(&pid);
             snd_data(socket_id, "ACK", 3);
 	        printf("DOWNLOAD EFFETTUATO!\n");
 	        free(read_buffer);
@@ -325,7 +330,7 @@ void setup_CS(char* username, char* filename, char* groupname, int check){
 	    if(strncmp(read_buffer, "READY", 5) == 0) {
 	    	char* command;
 	    	command = calloc(500, sizeof(char));
-	    	sprintf(command, "cs@%s:/home", getenv("CS"));
+	    	sprintf(command, "ubuntu@%s:/home/ubuntu/", getenv("CS"));
 
 	    	FILE* file_to_open;
 	    	file_to_open = fopen(filename, "r");
@@ -340,15 +345,18 @@ void setup_CS(char* username, char* filename, char* groupname, int check){
 		    }
 		    fclose(file_to_open);
 
-	    	/*pid_t pid = fork();
+            pid_t pid = fork();
 	    	if(pid < 0){
 				printf("errore nella fork");
 			}
 			else if(pid == 0){
-				execl("/usr/bin/scp", "scp", "-i", key_buffer, "-o", "UserKnownHostsFile=/dev/null", "-o", "StrictHostKeyChecking=no", filename, comamnd, (char*)0);
-			}*/
+				execl("/usr/bin/sudo", "/usr/bin/scp", "scp", "-i", "KeyPair.pem", "-o", "UserKnownHostsFile=/dev/null", "-o", "StrictHostKeyChecking=no", filename, command, (char*)0);
+                //snd_data(socket_id, "ACK", 3);
+			}
 
+            wait(&pid);
             snd_data(socket_id, "ACK", 3);
+            
 	        printf("UPLOAD EFFETTUATO!\n");
 	    	free(command);
 		    free(read_buffer);
