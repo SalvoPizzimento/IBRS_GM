@@ -9,20 +9,22 @@
  */
 #include "lib-ibrs-helper.h"
 
-void rcv_data(int socket_id, char* read_buffer, int size){
+int rcv_data(int socket_id, char* read_buffer, int size){
     if(read(socket_id, read_buffer, size) == -1){
         free(read_buffer);
         printf("Problema nella read della socket\n");
-        exit(EXIT_FAILURE);
+        return 0;
     }
+    return 1;
 }
 
-void snd_data(int socket_id, char* send_buffer, int size){
+int snd_data(int socket_id, char* send_buffer, int size){
     if(write(socket_id, send_buffer, size) == -1) {
         printf("problema nella write sulla socket \n");
         free(send_buffer);
-        exit(EXIT_FAILURE);
+        return 0;
     }
+    return 1;
 }
 
 int connect_socket(char serv_addr[], int port){
@@ -34,7 +36,7 @@ int connect_socket(char serv_addr[], int port){
     socket_fd = socket(AF_INET, SOCK_STREAM, 0); 
     if (socket_fd == -1) { 
         printf("socket creation failed...\n"); 
-        exit(0); 
+        return 0;
     } 
     else
         printf("Socket successfully created..\n"); 
@@ -47,7 +49,7 @@ int connect_socket(char serv_addr[], int port){
 
     if (connect(socket_fd, (SA*)&servaddr, sizeof(servaddr)) != 0) { 
         printf("connection with the server failed...\n"); 
-        exit(0);
+        return 0;
     } 
     else
         printf("connected to the server..\n");

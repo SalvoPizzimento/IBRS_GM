@@ -58,13 +58,13 @@ int connect_socket(char serv_addr[], int port);
  *  @param read_buffer buffer dove depositare i dati ricevuti
  *  @param size numero di caratteri massimi da ricevere
  */
-void rcv_data(int socket_id, char* read_buffer, int size);
+int rcv_data(int socket_id, char* read_buffer, int size);
 
 /** @brief Funzione per inviare dati ad una socket.
  *  @param socket_id socket a cui mandare i dati
  *  @param buffer buffer di dati da inviare
  *  @param size numero di caratteri massimi da mandare
  */
-void snd_data(int socket_id, char* buffer, int size);
+int snd_data(int socket_id, char* buffer, int size);
 
 #endif /* LIB_IBRS_HELPER_H */
