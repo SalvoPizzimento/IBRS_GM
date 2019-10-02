@@ -278,7 +278,7 @@ int setup_CS(char* username, char* filename, char* groupname, int check){
 
     read_buffer = calloc(500, sizeof(char));
     sprintf(read_buffer, "%ld", file_size);
-    printf("INVIO DELLA SIZE\n");
+    printf("Invio della size al CS...\n");
     if(snd_data(socket_id, read_buffer, 500) == 0){
         fclose(file_to_open);
         free(read_buffer);
@@ -290,6 +290,7 @@ int setup_CS(char* username, char* filename, char* groupname, int check){
     }
     free(read_buffer);
 
+    printf("Invio della firma al cs...\n");
     while(!end){
         if(file_size < 1024)
             end = true;
@@ -319,11 +320,10 @@ int setup_CS(char* username, char* filename, char* groupname, int check){
         }
     }
 
-    printf("INVIO DELLA FIRMA\n");
-
     free(file_buffer);
     fclose(file_to_open);
 
+    printf("Attesa validazione della firma da parte del CS...\n");
     read_buffer = calloc(1024, sizeof(char));
     if(rcv_data(socket_id, read_buffer, 1024) == 0){
         free(read_buffer);
@@ -333,7 +333,6 @@ int setup_CS(char* username, char* filename, char* groupname, int check){
         gmp_randclear(prng);
         return 0;
     }
-    printf("RICEZIONE RISULTATO DELLA VERIFICA\n");
 
     if(strncmp(read_buffer, "FAIL", 4) == 0){
         printf("Firma errata...\n");
@@ -344,6 +343,7 @@ int setup_CS(char* username, char* filename, char* groupname, int check){
 	    gmp_randclear(prng);
         return 0;
     }
+    printf("Firma validata correttamente..\n");
     free(read_buffer);
 
     if(check == 1){
