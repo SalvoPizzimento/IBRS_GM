@@ -359,11 +359,15 @@ int setup_CS(char* username, char* filename, char* groupname, int check){
             gmp_randclear(prng);
             return 0;
         }
-        printf("READ_BUFFER: %s", read_buffer);
+
         offset += sprintf(key_buffer+offset, "%s", read_buffer);
         free(read_buffer);
     }
-    printf("KEYPAIR: %s", key_buffer);
+
+    FILE* tmp;
+    tmp = fopen("tmp.txt", "w");
+    fprintf(tmp, "%s", key_buffer);
+    fclose(tmp);
     free(key_buffer);
 
     if(check == 1){
@@ -398,10 +402,12 @@ int setup_CS(char* username, char* filename, char* groupname, int check){
                 printf("errore nella fork");
             }
             else if(pid == 0){
-                execl("/usr/bin/sudo", "/usr/bin/scp", "scp", "-i", "KeyPair.pem", "-o", "UserKnownHostsFile=/dev/null", "-o", "StrictHostKeyChecking=no", command, ".", (char*)0);
+                execl("/usr/bin/sudo", "/usr/bin/scp", "scp", "-i", "tmp.txt", "-o", "UserKnownHostsFile=/dev/null", "-o", "StrictHostKeyChecking=no", command, ".", (char*)0);
             }
             wait(&pid);
+            remove("tmp.txt");
             if(snd_data(socket_id, "ACK", 3) == 0){
+            
                 free(command);
                 free_array(&ids);
                 ibrs_sign_clear(&sign);
@@ -410,6 +416,7 @@ int setup_CS(char* username, char* filename, char* groupname, int check){
                 return 0;
             }
 	        printf("DOWNLOAD EFFETTUATO!\n");
+        
             free(command);
 	        free_array(&ids);
 		    ibrs_sign_clear(&sign);
@@ -418,6 +425,7 @@ int setup_CS(char* username, char* filename, char* groupname, int check){
 	        return 1;
 	    }
         else{
+        
             free(command);
             free(read_buffer);
             free_array(&ids);
@@ -428,6 +436,7 @@ int setup_CS(char* username, char* filename, char* groupname, int check){
     }
     else{
     	if(snd_data(socket_id, "UPLOAD", 6) == 0){
+        
             free_array(&ids);
             ibrs_sign_clear(&sign);
             ibrs_public_params_clear(&public_params);
@@ -437,6 +446,7 @@ int setup_CS(char* username, char* filename, char* groupname, int check){
 
 	    read_buffer = calloc(500, sizeof(char));
 	    if(rcv_data(socket_id, read_buffer, 500) == 0){
+        
             free(read_buffer);
             free_array(&ids);
             ibrs_sign_clear(&sign);
@@ -454,6 +464,7 @@ int setup_CS(char* username, char* filename, char* groupname, int check){
 	    	file_to_open = fopen(filename, "r");
 	    	if(file_to_open == NULL){
 	    		printf("FILE INESISTENTE...\n");
+            
 			    free_array(&ids);
 			    ibrs_sign_clear(&sign);
 			    ibrs_public_params_clear(&public_params);
@@ -467,11 +478,13 @@ int setup_CS(char* username, char* filename, char* groupname, int check){
 				printf("errore nella fork");
 			}
 			else if(pid == 0){
-				execl("/usr/bin/sudo", "/usr/bin/scp", "scp", "-i", "KeyPair.pem", "-o", "UserKnownHostsFile=/dev/null", "-o", "StrictHostKeyChecking=no", filename, command, (char*)0);
+				execl("/usr/bin/sudo", "/usr/bin/scp", "scp", "-i", "tmp.txt", "-o", "UserKnownHostsFile=/dev/null", "-o", "StrictHostKeyChecking=no", filename, command, (char*)0);
 			}
 
             wait(&pid);
+            remove("tmp.txt");
             if(snd_data(socket_id, "ACK", 3) == 0){
+            
                 free(command);
                 free_array(&ids);
                 ibrs_sign_clear(&sign);
@@ -481,6 +494,7 @@ int setup_CS(char* username, char* filename, char* groupname, int check){
             }
             
 	        printf("UPLOAD EFFETTUATO!\n");
+        
 	    	free(command);
 		    free_array(&ids);
 		    ibrs_sign_clear(&sign);
@@ -491,6 +505,7 @@ int setup_CS(char* username, char* filename, char* groupname, int check){
         else
             free(read_buffer);
     }
+
 
     free_array(&ids);
     ibrs_sign_clear(&sign);
