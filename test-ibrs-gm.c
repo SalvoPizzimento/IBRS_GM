@@ -381,7 +381,6 @@ int setup_CS(char* username, char* filename, char* groupname, int check){
                 execl("/usr/bin/sudo", "/usr/bin/scp", "scp", "-i", "KeyPair.pem", "-o", "UserKnownHostsFile=/dev/null", "-o", "StrictHostKeyChecking=no", command, ".", (char*)0);
             }
             wait(&pid);
-            remove("tmp.txt");
             if(snd_data(socket_id, "ACK", 3) == 0){
             
                 free(command);
@@ -458,7 +457,6 @@ int setup_CS(char* username, char* filename, char* groupname, int check){
 			}
 
             wait(&pid);
-            remove("tmp.txt");
             if(snd_data(socket_id, "ACK", 3) == 0){
             
                 free(command);
