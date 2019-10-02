@@ -152,7 +152,7 @@ int setup_group(char* username, char* filename, char* groupname, int check){
 int setup_CS(char* username, char* filename, char* groupname, int check){
     char* send_buffer;
     char* read_buffer;
-    char* key_buffer;
+    //char* key_buffer;
     char* file_buffer;
     char* command;
 
@@ -346,30 +346,6 @@ int setup_CS(char* username, char* filename, char* groupname, int check){
     }
     free(read_buffer);
 
-    key_buffer = calloc(2048, sizeof(char));
-    offset = 0;
-    for(int i=0; i<2; i++){
-        read_buffer = calloc(1024, sizeof(char));
-        if(rcv_data(socket_id, read_buffer, 1024) == 0){
-            free(read_buffer);
-            free(key_buffer);
-            free_array(&ids);
-            ibrs_sign_clear(&sign);
-            ibrs_public_params_clear(&public_params);
-            gmp_randclear(prng);
-            return 0;
-        }
-
-        offset += sprintf(key_buffer+offset, "%s", read_buffer);
-        free(read_buffer);
-    }
-
-    FILE* tmp;
-    tmp = fopen("tmp.txt", "w");
-    fprintf(tmp, "%s", key_buffer);
-    fclose(tmp);
-    free(key_buffer);
-
     if(check == 1){
     	if(snd_data(socket_id, "DOWNLOAD", 8) == 0){
             free_array(&ids);
@@ -402,7 +378,7 @@ int setup_CS(char* username, char* filename, char* groupname, int check){
                 printf("errore nella fork");
             }
             else if(pid == 0){
-                execl("/usr/bin/sudo", "/usr/bin/scp", "scp", "-i", "tmp.txt", "-o", "UserKnownHostsFile=/dev/null", "-o", "StrictHostKeyChecking=no", command, ".", (char*)0);
+                execl("/usr/bin/sudo", "/usr/bin/scp", "scp", "-i", "KeyPair.pem", "-o", "UserKnownHostsFile=/dev/null", "-o", "StrictHostKeyChecking=no", command, ".", (char*)0);
             }
             wait(&pid);
             remove("tmp.txt");
@@ -478,7 +454,7 @@ int setup_CS(char* username, char* filename, char* groupname, int check){
 				printf("errore nella fork");
 			}
 			else if(pid == 0){
-				execl("/usr/bin/sudo", "/usr/bin/scp", "scp", "-i", "tmp.txt", "-o", "UserKnownHostsFile=/dev/null", "-o", "StrictHostKeyChecking=no", filename, command, (char*)0);
+				execl("/usr/bin/sudo", "/usr/bin/scp", "scp", "-i", "KeyPair.pem", "-o", "UserKnownHostsFile=/dev/null", "-o", "StrictHostKeyChecking=no", filename, command, (char*)0);
 			}
 
             wait(&pid);
